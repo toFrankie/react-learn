@@ -1,6 +1,6 @@
-React 实现了一套与浏览器无关的 DOM 系统，兼顾了性能和跨浏览器的兼容性。
+React 实现了一套独立于浏览器的 DOM 系统，兼顾了性能和跨浏览器的兼容性。我们借此机会完善了浏览器 DOM 实现的一些特殊情况。
 
-### React 元素与普通 DOM 元素的差异
+### React DOM 与浏览器 DOM 元素的差异
 
 在 React 中，所有 DOM 属性和属性（包括事件处理程序）都应该是 camelCased 的。
 
@@ -90,7 +90,28 @@ React 会自动将 `px` 后缀附加到某些内联样式属性。例如：
 </div>
 ```
 
-不是所有的样式属性都转换为像素字符串。某些属性仍然无单位（例如 zoom、order、flex）。无单位属性的完整列表可以在[这里](https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59)看到。
+不是所有的样式属性都转换为像素字符串。某些属性仍然无单位（例如 `zoom`、`order`、`flex`）。无单位属性的完整列表可以在[这里](https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59)看到。
+
+* suppressContentEditableWarning
+
+通常情况下，当其子元素也含有 `contentEditable` 属性会有警告，因为它不起作用。该属性会抑制该警告。除非你正在构建一个像手动管理的 Draft.js 这样的库，否则不要使用它 `contentEditable`。
+
+* value
+
+value 属性由 `<input>` 和 `<textarea>` 组件支持。你可以使用它来设置组件的值。这对于构建受控组件非常有用。`defaultValue` 是不受控制的等价物，用于设置组件首次安装时的值。
+
+
+##### 2. 所有支持的 HTML 属性
+
+截止 React 16，完全支持任何标准或[自定义](https://zh-hans.reactjs.org/blog/2017/09/08/dom-attributes-in-react-16.html) DOM 属性。
+
+React 为 DOM 提供了一套以 JavaScript 为中心的 API。由于 React 组件经常采用自定义或和 DOM 相关的 props 的关系，React 采用了 `camelCased` 的方式，正如 DOM APIs 那样：
+
+```jsx
+<div tabIndex={-1} />      // Just like node.tabIndex DOM API
+<div className="Button" /> // Just like node.className DOM API
+<input readOnly={true} />  // Just like node.readOnly DOM API
+```
 
 ### 如何支持 JSX 语法？
 
@@ -150,4 +171,5 @@ const element = <h1>Hello, world!</h1>
 
 * [Using Babel](https://babeljs.io/setup)
 * [React 入门实例教程](http://www.ruanyifeng.com/blog/2015/03/react.html)
+* [DOM 元素](https://zh-hans.reactjs.org/docs/dom-elements.html)
 * [React DOM Elements 腾讯云社区]()
