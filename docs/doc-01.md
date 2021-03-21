@@ -38,6 +38,60 @@ function MyComponent() {
 
 既然 `for` 是 JavaScript 中的保留字，React 元素就会用到 `htmlFor`。
 
+* onChange
+
+`onChange` 事件的行为与你所期待的一样：每当表单字段发生更改时，将触发此事件。我们故意不使用现有的浏览器行为，因为 `onChange` 它的行为不当，React 依靠此事件来实时处理用户输入。
+
+* selected
+
+`selected` 属性由 `<option>` 组件支持。你可以使用它来设置组件是否被选中。这对于构建受控组件非常有用。
+
+* style
+
+`style` 属性接受带有 camelCased 属性的 JavaScript 对象而不是 CSS 字符串。这与 `style` JavaScript 属性一致，效率更高，并可防止 XSS 安全漏洞。例如：
+
+```jsx
+const divStyle = {
+  color: 'blue',
+  backgroundImage: 'url(' + imgUrl + ')'
+};
+
+function HelloWorldComponent() {
+  return <div style={divStyle}>Hello World!</div>
+}
+```
+
+请注意，样式不是自动复制的。要支持旧版浏览器，您需要提供相应的样式属性：
+
+```jsx
+const divStyle = {
+  WebkitTransition: 'all', // note the capital 'W' here
+  msTransition: 'all' // 'ms' is the only lowercase vendor prefix
+};
+
+function ComponentWithTransition() {
+  return <div style={divStyle}>This should work cross-browser</div>;
+}
+```
+
+样式键是驼峰式的，以便与从 JS（例如 `node.style.backgroundImage`）访问 DOM 节点上的属性一致。[除 `ms` 大写字母之外的供应商前缀应以大写字母开头](https://www.andismith.com/blogs/2012/02/modernizr-prefixed/)。这就是为什么 `WebkitTransition` 有一个大写 “W”。
+
+React 会自动将 `px` 后缀附加到某些内联样式属性。例如：
+
+```jsx
+// This:
+<div style={{ height: 10 }}>
+  Hello World!
+</div>;
+
+// Becomes:
+<div style="height: 10px;">
+  Hello World!
+</div>
+```
+
+不是所有的样式属性都转换为像素字符串。某些属性仍然无单位（例如 zoom、order、flex）。无单位属性的完整列表可以在[这里](https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59)看到。
+
 ### 如何支持 JSX 语法？
 
 如果在浏览器端直接 JSX 语法，需要引入 babel 的 JSX 解析器，将 JSX 转化为 JS 语法。同时引入 babel 后，你就可以使用 ES6+ 语法，babel 会帮你把新的 ES6+ 语法特性转化为 ES5 语法，以兼容更多的浏览器。
@@ -95,3 +149,5 @@ const element = <h1>Hello, world!</h1>
 ### 参考
 
 * [Using Babel](https://babeljs.io/setup)
+* [React 入门实例教程](http://www.ruanyifeng.com/blog/2015/03/react.html)
+* [React DOM Elements 腾讯云社区]()
