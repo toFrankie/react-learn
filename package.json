@@ -1,0 +1,15 @@
+{
+  "name": "react-learn",
+  "version": "1.0.0",
+  "description": "重新认识 React",
+  "main": "./src/js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react"
+  ],
+  "repository": "git@github.com:toFrankie/react-learn.git",
+  "author": "Frankie <1426203851@qq.com>",
+  "license": "ISC"
+}
