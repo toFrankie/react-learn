@@ -11,5 +11,11 @@
   ],
   "repository": "git@github.com:toFrankie/react-learn.git",
   "author": "Frankie <1426203851@qq.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "scripts": {
+    "minification": "terser -c -m -o ./js/button.min.js -- ./js/button.js"
+  },
+  "devDependencies": {
+    "terser": "^5.6.1"
+  }
 }
