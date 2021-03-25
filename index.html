@@ -29,17 +29,8 @@
   <div class="like_button_container" data-commentid="1"></div>
   </p>
 
-  <p>
-    This is the second comment.
-    <!-- We will put our React component inside this div. -->
-  <div class="like_button_container" data-commentid="2"></div>
-  </p>
+  <div id="create"></div>
 
-  <p>
-    This is the third comment.
-    <!-- We will put our React component inside this div. -->
-  <div class="like_button_container" data-commentid="3"></div>
-  </p>
 
   <!-- Load React. -->
   <script src="react/react.development.js"></script>
@@ -50,6 +41,20 @@
 
   <!-- Load our React component. -->
   <script src="js/button.js"></script>
+  <script src="js/title.js"></script>
+  <script type="text/babel">
+    function tick() {
+      const element = (
+        <div>
+          <h1>Hello world</h1>
+          <h2>It is {new Date().toLocaleTimeString()}.</h2>
+        </div>
+      )
+      ReactDOM.render(element, document.getElementById('create'))
+    }
+
+    // setInterval(tick, 1000)
+  </script>
 </body>
 
 </html>
