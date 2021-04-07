@@ -8,6 +8,10 @@
 
 * [doc-02.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-02.md) 分析 React.createElement 源码。
 
+* [doc-03.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-03.md) 元素渲染。
+
+* [doc-04.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-04.md) 组件 & Props
+
 ##### 源码
 
 关于 React 的源码，可从本项目 `react` 目录对应 js 中查找，也可以在 GitHub 上找。
