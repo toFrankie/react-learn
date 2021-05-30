@@ -30,6 +30,7 @@
   </p>
 
   <div id="create"></div>
+  <div id="props"></div>
 
 
   <!-- Load React. -->
@@ -54,6 +55,22 @@
     }
 
     // setInterval(tick, 1000)
+  </script>
+  <script type="text/babel">
+    function Welcome(props) {
+        console.log(props)
+        return <h1>Hello, {props.name}</h1>
+      }
+
+      const element = (
+        <Welcome name="Frankie" />
+      )
+
+      console.log(element)
+      ReactDOM.render(
+        element,
+        document.getElementById('props')
+      )
   </script>
 </body>
 
