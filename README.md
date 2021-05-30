@@ -12,6 +12,8 @@
 
 * [doc-04.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-04.md) 组件 & Props
 
+* [doc-05.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-05.md) State & 生命周期
+
 ##### 源码
 
 关于 React 的源码，可从本项目 `react` 目录对应 js 中查找，也可以在 GitHub 上找。
