@@ -262,3 +262,69 @@ ReactDOM.render(
 3. 当 `Clock` 的输出被插入到 DOM 中后，React 就会调用 `componentDidMount()` 生命周期方法。在这个方法中，`Clock` 组件向浏览器请求设置一个计时器来调用一次组件的 `tick()` 方法。
 4. 浏览器每秒都会调用一次 `tick()` 方法。在这个方法之中，`Clock` 组件会通过调用 `setState()` 来计划进行一次 UI 更新。得益于 `setState()` 的调用，React 能够知道 `state` 已经改变了，然后重新调用 `render()` 方法来确定页面上该显示什么。这一次，`render()` 方法中的 `this.state.date` 就不一样了，如此以来就会渲染输出更新过的时间。React 也会相应地更新 DOM。
 5. 一旦 `Clock` 组件从 DOM 中被移除，React 就会调用 `componentWillUnmount()` 生命周期方法，这样计时器就停止了。
+
+### 正确地使用 State
+
+关于 `setState()` 你应该了解三件事：
+
+##### 1. 不要直接修改 State
+
+例如，此代码不会重新渲染组件：
+
+```jsx
+// Wrong
+this.state.comment = 'Hello'
+```
+
+而应该使用 `setState()`：
+
+```jsx
+// Correct
+this.setState({ comment: 'Hello' })
+```
+
+构造函数是唯一可以给 `this.state` 赋值的地方。
+
+假设在 `componentDidMount()` 生命周期中对 `this.state` 进行赋值操作，会抛出以下警告：
+
+```jsx
+componentDidMount() {
+  this.state = {} // 尽管可以设置成功，但会被警告
+  // Warning: Expected Clock state to match memoized state before processing the update queue. This might either be because of a bug in React, or because a component reassigns its own `this.state`.
+}
+```
+
+##### 2. State 的更新可能是异步的
+
+出于性能考虑，React 可能会把多个 `setState()` 调用合并成一个调用。
+
+因为 `this.props` 和 `this.state` 可能会异步更新，所以你不要依赖他们的值来更新下一个状态。
+
+例如，此代码可能会无法更新计数器：
+
+```jsx
+// Wrong
+this.setState({
+  counter: this.state.counter + this.props.increment
+})
+```
+
+要解决这个问题，可以让 `setState()` 接收一个函数而不是一个对象。这个函数用上一个 `state` 作为第一个参数，将此次更新被应用时的 `props` 作为第二个参数：
+
+```jsx
+// Correct
+this.setState((state, props) => {
+  counter: state.counter + props.increment
+}})
+```
+
+上面使用了箭头函数，不过普通的函数也同样可以：
+
+```jsx
+// Correct
+this.setState(function(state, props) {
+  return {
+    counter: state.counter + props.increment
+  }
+}})
+```
