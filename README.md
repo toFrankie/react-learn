@@ -16,6 +16,10 @@
 
 * [doc-06.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-06.md) 事件处理
 
+* [doc-07.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-07.md) 条件渲染
+
+* [doc-08.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-08.md) 列表 & Key
+
 ##### 源码
 
 关于 React 的源码，可从本项目 `react` 目录对应 js 中查找，也可以在 GitHub 上找。
