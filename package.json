@@ -2,18 +2,18 @@
   "name": "react-learn",
   "version": "1.0.0",
   "description": "重新认识 React",
+  "repository": "git@github.com:toFrankie/react-learn.git",
+  "author": "Frankie <1426203851@qq.com>",
+  "license": "ISC",
   "main": "./src/js",
+  "keywords": [
+    "react"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "minification": "terser -c -m -o ./js/button.min.js -- ./js/button.js",
     "prod": "babel js --out-dir build"
   },
-  "keywords": [
-    "react"
-  ],
-  "repository": "git@github.com:toFrankie/react-learn.git",
-  "author": "Frankie <1426203851@qq.com>",
-  "license": "ISC",
   "devDependencies": {
     "babel-cli": "6",
     "babel-preset-react-app": "3",
