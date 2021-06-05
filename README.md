@@ -22,6 +22,8 @@
 
 * [doc-09.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-09.md) 表单
 
+* [doc-10.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-10.md) 状态提升
+
 ##### 源码
 
 关于 React 的源码，可从本项目 `react` 目录对应 js 中查找，也可以在 GitHub 上找。
