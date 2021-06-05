@@ -24,6 +24,8 @@
 
 * [doc-10.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-10.md) 状态提升
 
+* [doc-11.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-11.md) 组合 vs 继承
+
 ##### 源码
 
 关于 React 的源码，可从本项目 `react` 目录对应 js 中查找，也可以在 GitHub 上找。
