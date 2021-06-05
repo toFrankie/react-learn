@@ -166,3 +166,108 @@ class FlavorForm extends React.Component {
 ```jsx
 <select multiple={true} value={['B', 'C']}>
 ```
+
+### 文件 input 标签
+
+在 HTML 中，`<input type="file">` 允许用户从存储设备中选择一个或多个文件，将其上传到服务器，或通过使用 JavaScript 的 [File API](https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications) 进行控制。
+
+```html
+<input type="file" />
+```
+
+因为它的 `value` 只读，所以它是 React 中的一个**非受控组件**。将其他非受控组件在[后续文档](https://react.docschina.org/docs/uncontrolled-components.html#the-file-input-tag)中一起讨论。
+
+### 处理多个输入
+
+当你需要处理多个 `input` 元素时，我们可以给每个元素添加 `name` 属性，并让处理函数根据 `event.target.name` 的值选择要执行的操作。
+
+例如：
+
+```jsx
+class Reservation extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      isGoing: true,
+      numberOfGuests: 2
+    }
+
+    this.handleChange = this.handleChange.bind(this)
+  }
+
+  handleChange(event) {
+    const { name, checked, value } = event.target
+    this.setState({
+      [name]: name === 'isGoing' ? checked : value
+    })
+  }
+
+  render() {
+    return (
+      <form>
+        <label>
+          参与：
+          <input
+            name="isGoing"
+            type="checkbox"
+            checked={this.state.isGoing}
+            onChange={this.handleChange}
+          />
+        </label>
+        <br />
+        <label>
+          来宾人数：
+          <input
+            name="numberOfGuests"
+            type="number"
+            value={this.state.numberOfGuests}
+            onChange={this.handleChange}
+          />
+        </label>
+      </form>
+    )
+  }
+}
+```
+
+这里使用了 [ES6 计算属性名称](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#computed_property_names)的语法更新给定输入名称对应的 state 值：
+
+例如：
+
+```jsx
+this.setState({
+  [name]: name === 'isGoing' ? checked : value
+})
+```
+
+等同于 ES5：
+
+```jsx
+var partialState = {}
+partialState[name] = value
+this.setState(partialState)
+```
+
+另外，由于 `setState()` 自动[将部分 state 合并到当前 state](https://react.docschina.org/docs/state-and-lifecycle.html#state-updates-are-merged)，只需调用它更改部分 state 即可。
+
+### 受控输入空值
+
+在[受控组件](https://react.docschina.org/docs/forms.html#controlled-components)上指定 `value` 的 `prop` 会阻止用户更改输入。如果你指定了 `value`，但输入仍可编辑，则可能是你意外地将 `value` 设置为 `undefined` 或 `null`。
+
+下面的代码演示了这一点。（输入最初被锁定，但在短时间延迟后变为可编辑。）
+
+```jsx
+ReactDOM.render(<input value="hi" />, mountNode)
+
+setTimeout(function() {
+  ReactDOM.render(<input value={null} />, mountNode)
+}, 1000)
+```
+
+### 受控组件的替代品
+
+有时使用受控组件会很麻烦，因为你需要为数据变化的每种方式都编写事件处理函数，并通过一个 React 组件传递所有的输入 state。当你将之前的代码库转换为 React 或将 React 应用程序与非 React 库集成时，这可能会令人厌烦。在这些情况下，你可能希望使用[非受控组件](https://react.docschina.org/docs/uncontrolled-components.html)，这是实现输入表单的另一种方式。
+
+### 成熟的解决方案
+
+如果你想寻找包含验证、追踪访问字段以及处理表单提交的完整解决方案，使用 [Formik](https://formik.org/) 是不错的选择。然而，它也是建立在受控组件和管理 state 的基础之上 ——— 所以不要忽视学习它们。
