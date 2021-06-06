@@ -26,6 +26,8 @@
 
 * [doc-11.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-11.md) 组合 vs 继承
 
+* [doc-12.md](https://github.com/toFrankie/react-learn/blob/main/docs/doc-12.md) React 哲学
+
 ##### 源码
 
 关于 React 的源码，可从本项目 `react` 目录对应 js 中查找，也可以在 GitHub 上找。
@@ -33,3 +35,5 @@
 ##### React
 
 获取不同版本 React 源码可以在 [UNPKG](https://unpkg.com/browse/react@15.7.0/) 查找。
+
+从 React 16 开始，你可以在[历史版本页面](https://zh-hans.reactjs.org/versions/)找到老版本的 React 文档。
