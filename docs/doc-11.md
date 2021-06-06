@@ -58,3 +58,88 @@ function App() {
 ```
 
 `<Contacts />` 和 `<Chat />` 之类的 React 元素本质上就是对象（object），所以你可以把它们当做 `props`，像其他数据一样传递。这种方法可能使你想起其他库中“**槽**”（slot）的概念，但在 React 中没有“槽”这一个概念的限制，你可以将任何东西作为 `props` 进行传递。
+
+
+### 特例关系
+
+有些时候，我们会把一些组件看作是其他组件的特殊实例，比如 `WelcomeDialog` 可以说是 `Dialog` 的特殊实例。
+
+在 React 中，我们可以通过组合来实现这一点。“特殊”组件可以通过 `props` 定制并渲染“一般组件”：
+
+```jsx
+function Dialog(props) {
+  return (
+    <FancyBorder color="blue">
+      <h1 className="Dialog-title">{props.title}</h1>
+      <p className="Dialog-message">
+        {props.message}
+      </p>
+    </FancyBorder>
+  )
+}
+
+function WelcomeDialog() {
+  return (
+    <Dialog
+      title="Welcome"
+      message="Thank you for visiting our spacecraft!"
+    />
+  )
+}
+```
+
+组合也同样使用于以 `class` 形式定义的组件。
+
+```jsx
+function Dialog(props) {
+  return (
+    <FancyBorder color="blue">
+      <h1 className="Dialog-title">{props.title}</h1>
+      <p className="Dialog-message">
+        {props.message}
+      </p>
+      {props.children}
+    </FancyBorder>
+  )
+}
+
+class SignUpDialog extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { login: '' }
+    this.handleChange = this.handleChange.bind(this)
+    this.handleSignUp = this.handleSignUp.bind(this)
+  }
+
+  handleChange(e) {
+    this.setState({ login: e.target.value })
+  }
+
+  handleSignUp(e) {
+    alert(`Welcom aboard, ${this.state.login}!`)
+  }
+
+  render() {
+    return (
+      <Dialog
+        title="Mars Exploration Program"
+        message="How should we refer to you?"
+      >
+        <input value={this.state.login} onChange={this.handleChange} />
+        <button onClick={this.handleSignUp}>
+          Sign Me Up!
+        </button>
+      </Dialog>
+    )
+  }
+}
+```
+
+
+### 那么继承呢？
+
+在 Facebook，我们在成百上千个组件中使用 React。我们并没有发现需要使用继承来构建组件层次的情况。
+
+Props 和组合为你提供了清晰而安全地定制组件外观和行为的灵活方式。注意：组件可以接受任意 props，包括基本数据类型，React 元素以及函数。
+
+如果你想要在组件间复用非 UI 的功能，我们讲义将其提取为一个单独的 JavaScript 模块，如函数、对象、或者类。组件可以直接引入（import）而无需通过 extend 继承它们。
