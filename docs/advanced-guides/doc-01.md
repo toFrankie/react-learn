@@ -72,3 +72,28 @@ import('./math.js').then(math => {
 如果你自己配置 Webpack，你可能要阅读下 Webpack 关于[代码分割](https://webpack.docschina.org/guides/code-splitting/)的指南。你的Webpack 配置应该[类似于此](https://gist.github.com/gaearon/ca6e803f5c604d37468b0091d9959269)。
 
 当你使用 [Babel](https://babeljs.io/) 时，你要确保 Babel 能够解析动态 `import` 语法而不是将其进行转换。对于这一要求你需要 [@babel/plugin-syntax-dynamic-import](https://classic.yarnpkg.com/en/package/@babel/plugin-syntax-dynamic-import) 插件。
+
+
+### React.lazy
+
+> 注意：`React.lazy` 和 `Suspense` 技术还不支持服务端渲染。如果你想要服务端渲染的应用中使用，我们推荐 [Loadable Compoents](https://github.com/gregberge/loadable-components) 这个库。它有一个很棒的[服务端渲染打包指南](https://loadable-components.com/docs/server-side-rendering/)。
+
+`React.lazy` 函数能让你像渲染常规组件一样处理动态引入（的组件）。
+
+使用之前：
+
+```jsx
+import OtherComponent from './OtherComponent'
+```
+
+使用之后：
+
+```
+const OtherComponent = React.lazy(() => import('./OtherComponent'))
+```
+
+此代码将会在组件首次渲染时，自动导入包含 `OtherComponent` 组件的包。
+
+`React.lazy` 接受一个函数，这个函数需要动态调用 `import()`。它必须返回一个 `Promise`，该 `Promise` 需要 `resolve` 一个 `default export` 的 React 组件。
+
+未完待续...
