@@ -17,7 +17,7 @@ React.createElement(
 )
 ```
 
-* `type` 可以是标签名字符串（如 div 或 span 等），也可以是 React 组件类型（class 组件或函数组件），或者是 React fragment 类型。
+* `type` 可以是标签名字符串（如 `div` 或 `span` 等），也可以是 React 组件类型（class 组件或函数组件），或者是 React fragment 类型。
 
 * `props` 可选，组件属性
 
