@@ -120,3 +120,245 @@ Provider 接收一个 `value` 属性，传递给消费组件。一个 Provider �
 通过新旧值检测来确定变化，使用了与 `Object.is()` 相同的算法。
 
 > 注意，当传递对象给 `value` 时，检测变化的方式会导致一些问题：详见[注意事项](https://react.docschina.org/docs/context.html#caveats)。
+
+#### Class.contextType
+
+```jsx
+class MyClass extends React.Component {
+  static contextType = MyContext
+
+  render() {
+    // this.context 就是最近 Context 的值
+    // 也可以在任意生命周期函数中访问到它
+    const ctx = this.context
+  }
+}
+
+
+// 或者
+class MyClass extends React.Component {
+  render() {
+    const ctx = this.context
+  }
+}
+MyClass.contextType = MyContext
+```
+
+挂载在 class 上的 `contextType` 属性会被重赋值为一个由 `React.createContext()` 创建的 Context 对象。这能让你使用 `this.context` 来消费最近 Context 上的那个值。你可以在任何声明周期中访问到它，包括 `render` 函数。
+
+> 你只能通过该 API 订阅单一 context。如果你想订阅多个，阅读[使用多个 Context](https://react.docschina.org/docs/context.html#consuming-multiple-contexts) 章节。
+
+
+#### Context.Consumer
+
+```
+<MyContext.Consumer>
+  {
+    value => /* 基于 context 值进行渲染*/
+  }
+</MyContext.Consumer>
+```
+
+这里，React 组件也可以订阅到 context 变更。这能让你在[函数式组件](https://react.docschina.org/docs/components-and-props.html#function-and-class-components)中完成订阅 context。
+
+这需要[函数作为子元素（function as a child）](https://react.docschina.org/docs/render-props.html#using-props-other-than-render)这种做法。这个函数接收当前的 context 值，返回一个 React 节点。传递给函数的 `value` 值等同于往上组件树离这个 context 最近的 Provider 提供的 `value` 值。如果没有对应的 Provider，`value` 参数等同于传递给 `createContext()` 的 `defaultValue`。
+
+> 注意，想要了解更多关于“函数作为子元素（function as a child）”模式，详见[render props](https://react.docschina.org/docs/render-props.html)
+
+
+#### Context.displayName
+
+context 对象接受一个名为 `displayName` 的 property，类型为字符串。React DevTools 使用该字符串来确定 context 要显示的内容。
+
+```jsx
+// 按照这样的话，在 React DevTools 中显示的是 MyContext.Provider
+const MyContext = React.createContext(defaultValue)
+<MyContext.Provider value={/* ... */}>
+  {/* ... */}
+<MyContext.Provider>
+
+
+// 按照这样的话，在 React DevTools 中显示的是 customName.Provider
+const MyContext = React.createContext(defaultValue)
+MyContext.displayName = 'customName'
+<MyContext.Provider value={/* ... */}>
+  {/* ... */}
+<MyContext.Provider>
+```
+
+## 示例
+
+#### 动态更新 Context
+
+使用动态的 Context，并进行更新。
+
+**themeContext.jsx**
+
+```jsx
+import { createContext } from 'react'
+
+export const themes = {
+  light: {
+    color: '#000',
+    bg: '#fff'
+  },
+  dark: {
+    color: '#fff',
+    bg: '#000'
+  }
+}
+
+export const ThemeContext = createContext({
+  theme: themes.light,
+  toggleTheme: () => {}
+})
+```
+
+**themedButton.jsx**
+
+```jsx
+import React, { Component } from 'react'
+import { ThemeContext } from './themeContext'
+
+class ThemedButton extends Component {
+  static contextType = ThemeContext
+
+  render() {
+    let { theme, toggleTheme } = this.context
+    return <button {...this.props} onClick={toggleTheme} style={{ color: theme.color, background: theme.bg }} />
+  }
+}
+
+export default ThemedButton
+```
+
+**app.jsx**
+
+```jsx
+import React, { Component } from 'react'
+import ThemedButton from './themedButton'
+import { ThemeContext, themes } from './themeContext'
+
+export default class App extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      theme: themes.light,
+      toggleTheme: this.toggleTheme
+    }
+  }
+
+  toggleTheme = () => {
+    this.setState(state => ({
+      theme: state.theme === themes.light ? themes.dark : themes.light
+    }))
+  }
+
+  render() {
+    return (
+      <div>
+        <ThemeContext.Provider value={this.state}>
+          <Toolbar />
+        </ThemeContext.Provider>
+        <section>
+          <ThemedButton>Out of Provider</ThemedButton>
+        </section>
+      </div>
+    )
+  }
+}
+
+function Toolbar(props) {
+  return <ThemedButton>Change Theme</ThemedButton>
+}
+```
+
+## 注意事项
+
+如下示例，当每一次 Provider 重渲染时，以下的代码会重渲染所有下面的 consumers 组件，因为 `value` 属性总是被赋值为新的对象。
+
+```jsx
+class App extends React.Component {
+  render() {
+    return (
+      <MyContext.Provider value={{ something: 'something' }}>
+        <Toolbar />
+      </MyContext.Provider>
+    )
+  }
+}
+```
+
+
+## 旧版 Context
+
+在 React 16.3 之前，属于[旧版 context API](https://react.docschina.org/docs/legacy-context.html)。
+
+**Usage**
+
+```jsx
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+
+// 在 context 的生产者添加 childContextTypes 和 getChildContext
+class Parent extends Component {
+  static childContextTypes = {
+    color: PropTypes.string
+  }
+
+  state = {
+    color: 'red'
+  }
+
+  getChildContext() {
+    return {
+      color: this.state.color
+    }
+  }
+
+  render() {
+    return <Child />
+  }
+}
+
+class Child extends Component {
+  // 生产者的子树上的所有组件可通过 定义 contextTypes 来访问 context
+  static contextTypes = {
+    color: PropTypes.string
+  }
+
+  render() {
+    const ctx = this.context
+    console.log(ctx)
+    return <div>{ctx.color}</div>
+  }
+}
+
+// 函数组件，可以这样获取
+function Button(props, context) {
+  return <button style={{ color: context.color }}>{props.children}</button>
+}
+
+// 只要 contextTypes 被定义为函数的一个属性，
+// 函数组件第二个参数就能接收到 context，否则该参数将会是一个空对象。
+Button.contextTypes = {
+  color: PropTypes.string
+}
+```
+
+**生命周期方法中引用 Context**
+
+如果一个组件内定义了 `contextTypes`，下面的 生命周期方法 会接收一个额外参数，就是 context 对象：
+
+* `constructor(props, context)`
+* `componentWillReceiveProps(nextProps, nextContext)`
+* `shouldComponentUpdate(nextProps, nextState, nextContext)`
+* `componentWillUpdate(nextProps, nextState, nextContext)`
+
+> 注意：从 React 16 开始，`componentDidUpdate` 不再接收 `prevContext`。
+
+**更新 context**
+
+当 Parent 组件的 `props` 或 `state` 改变的时候，`getChildContext` 方法就会被调用。为了更新 context 里的数据，使用 `this.setState` 触发当前 `state` 的更新。这样会产生一个新的 context 并且子组件会接收到变化。
+
+> 如果组件提供的一个 context 发生了变化，而中间父组件的 `shouldComponentUpdate` 返回 `false`，那么使用到该值的后代组件不会进行更新。使用了 context 的组件则完全失控，所以基本上没有办法能够可靠的更新 context。
