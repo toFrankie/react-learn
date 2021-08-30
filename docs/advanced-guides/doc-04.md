@@ -68,7 +68,7 @@ const node = this.myRef.current
 
 * **你不能在“函数组件”上使用 `ref` 属性，因为它们没有实例。**
 
-#### 2. 举例
+#### 3. 举例
 
 就以上几种类型，举些例子...
 
@@ -205,3 +205,147 @@ function Parent() {
   )
 }
 ```
+
+## 将 DOM Refs 暴露给父组件
+
+在极少数情况下，你可能希望在父组件中引用子节点的 DOM 节点。通常不建议这样做，因为它会打破组件的封装，但它偶尔可用于触发焦点或测量子 DOM 节点的大小或位置。
+
+虽然你可以向[子组件添加 ref](https://react.docschina.org/docs/refs-and-the-dom.html#adding-a-ref-to-a-class-component)，但这不是一个理想的方案，因为你只能获取到组件实例，而不是 DOM 节点。并且，它还在函数组件上无效。
+
+如果你使用 React 16.3 或更高版本，这种情况下我们推荐使用 [ref 转发](https://react.docschina.org/docs/forwarding-refs.html)。Ref 转发组件可以像暴露自己的 ref 一样暴露子组件的 ref。关于怎样对父组件暴露子组件的 DOM 节点，在 [ref 转发文档](https://react.docschina.org/docs/forwarding-refs.html)中有一个详细的例子。
+
+如果你使用 16.2 或更低版本的 React，或者你需要比 ref 转发更高的灵活性，你可以使用[这个替代方案](https://gist.github.com/gaearon/1a018a023347fe1c2476073330cc5509)将 ref 作为特殊名字的 prop 直接传递。
+
+可能的话，我们不建议暴露 DOM 节点，但有时候它会成为救命稻草。注意这个方案需要你在子组件中增加一些代码。如果你对子组件的实现没有控制权的话，你剩下的选择是使用 [findDOMNode()](https://react.docschina.org/docs/react-dom.html#finddomnode)，但在[严格模式](https://react.docschina.org/docs/strict-mode.html#warning-about-deprecated-finddomnode-usage)下已被废弃且不推荐使用。
+
+## 回调 Refs
+
+> 在低于 React 16.3 版本下使用。
+
+React 也支持另一种设置 refs 的方式，称为“回调 refs”。它能助你更精细地控制何时 refs 被设置和解除。
+
+不同于传递 createRef() 创建的 ref 属性，你会传递一个函数。这个函数中接受 React 组件实例或 HTML DOM 元素作为参数，以使得它们能在其他地方被存储和访问。
+
+下面的例子描述了一个通用的范例：使用 ref 回调函数，在实例的属性中存储对 DOM 阶段的引用。
+
+```jsx
+import React, { Component } from 'react'
+
+export default class MyInput extends Component {
+  constructor(props) {
+    super(props)
+    this.inputRef = null
+    this.setInputRef = element => {
+      // 若 this.setInputRef 绑定在 HTML 元素上，element 则指向该 HTML 元素
+      // 若 this.setInputRef 绑定在 React 组件上，那么 element 则指向该组件实例，
+      // 这点表现与 React.createRef() 表现是一致的。
+      this.inputRef = element
+    }
+    this.focusInput = this.focusInput.bind(this)
+  }
+
+  componentDidMount() {
+    console.log(this.inputRef) // 指向所绑定的 <input > 元素
+  }
+
+  focusInput() {
+    this.inputRef.focus()
+  }
+
+  render() {
+    return (
+      <>
+        <input type="text" ref={this.setInputRef} />
+        <input type="button" onClick={this.focusInput} value="Focus the input" />
+      </>
+    )
+  }
+}
+```
+
+> 同样地，React 将在组件挂载时，会调用 ref 回调函数并传入 DOM 元素，当卸载时调用它并传入 `null`。在 `componentDidMount()` 或 `componentDidUpdate()` 触发前，React 会保证 refs 一定是最新的。
+
+
+你可以在组件间传递回调形式的 refs，就像你可以传递通过 `React.createRef()` 创建的对象 refs 一样。
+
+```jsx
+function CustomTextInput(props) {
+  return (
+    <div>
+      <input ref={props.inputRef} />
+    </div>
+  )
+}
+
+class Parent extends React.Component {
+  componentDidMount() {
+    // this.inputElement 将会指向 CustomTextInput 组件下的 input 元素
+    console.log(this.inputElement)
+  }
+  render() {
+    return <CustomTextInput inputRef={el => (this.inputElement = el)} />
+  }
+}
+```
+
+在上面的例子中，`Parent` 把它的 `refs` 回调函数当作 `inputRef` props 传递给了 `CustomTextInput`，而且 `CustomTextInput` 把相同的函数作为特殊的 `ref` 属性传递给了 `<input>`。结果是，在 `Parent` 中的 `this.inputElement` 会被设置为与 `CustomTextInput` 中的 `input` 元素相对应的 DOM 节点。
+
+## 过时 API：String 类型的 Refs
+
+如果你之前使用过 React，你可能了解过之前的 API 中的 string 类型的 ref 属性，例如 "textInput"。你可以通过 this.refs.textInput 来访问 DOM 节点。我们不建议使用它，因为 string 类型的 refs 存在[一些问题](https://github.com/facebook/react/pull/8333#issuecomment-271648615)。它已过时并可能会在未来的版本被移除。
+
+> 如果 `ref` 回调函数是以内联函数的方式定义的，在更新过程中它会被执行两次，第一次传入参数 `null`，然后第二次会传入参数 DOM 元素。这是因为在每次渲染时会创建一个新的函数实例，所以 React 清空旧的 ref 并且设置新的。通过将 ref 的回调函数定义成 class 的绑定函数的方式可以避免上述问题，但是大多数情况下它是无关紧要的。
+
+```jsx
+class MyInput extends Component {
+  componentDidMount() {
+    // 通过 this.refs 可访问当前组件下所有的 String Ref
+    console.log(this.refs.domRef) // 指向 <input> 元素
+    console.log(this.refs.classRef) // 指向 Child1 组件实例
+    console.log(this.refs.funcRef) // undefined，函数组件同样无效
+  }
+
+  render() {
+    return (
+      <>
+        <input ref="domRef" />
+        <Child1 ref="classRef" />
+        <Child2 ref="funcRef" />
+      </>
+    )
+  }
+}
+
+class Child1 extends Component {
+  render() {
+    return <div>Child Component 1</div>
+  }
+}
+
+function Child2() {
+  return <div>Child Component 2</div>
+}
+```
+
+> 同样地，在组件挂载时，会更新为对应的 DOM 元素或 Class 组件实例，并在 `componentDidMount()` 或 `componentDidUpdate()` 触发前，React 会保证 refs 一定是最新的。在组件卸载时传入 `undefined`。
+
+## 总结
+
+在 React 中，有四种创建 Refs 的方式：
+
+* `React.useRef(initialValue)`
+
+  适用于函数组件，并且函数组件内避免使用下面几种方式，由于函数组件的渲染方式，可能会有问题。
+
+* `React.createRef()`
+  适用于 class 组件。该方法返回一个 ref 对象，也常挂载到 class 组件实例上，以便可以在整个组件中引用它。
+
+* `<div ref={el => this.xxx = el } />`
+  React 16.2 及以下采用这种方式，一般绑定到组件实例上，然后通过 `this.xxx` 访问 ref 对象。
+
+* `<div ref="strRef" />`
+  通过 this.refs.strRef 形式访问 ref 对象。
+
+> 请注意，函数组件内尽可能地使用 `React.useRef()`，class 组件使用 `React.createRef()`，当两者都不支持的情况下，才考虑回调 refs 或字符串类型 refs。而且后面三种形式应用于 class 组件的子函数组件均无效，因为函数组件没有实例（即 `this`）。
+
+以上几种方式，应用于合适的场景时。React 将在组件挂载时更新 ref 对象（在 `componentDidMount()` 或 `componentDidUpdate()` 触发前），当卸载时 ref 对象将清空（即更新为 `undefined` 或 `null`）。
