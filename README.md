@@ -32,6 +32,7 @@
 
 * [doc-01.md](https://github.com/toFrankie/react-learn/blob/main/docs/advanced-guides/doc-01.md) 代码分隔
 * [doc-02.md](https://github.com/toFrankie/react-learn/blob/main/docs/advanced-guides/doc-02.md) Context
+* [doc-03.md](https://github.com/toFrankie/react-learn/blob/main/docs/advanced-guides/doc-03.md) 错误边界
 
 未完待续...
 
