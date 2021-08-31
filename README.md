@@ -35,6 +35,7 @@
 * [doc-03.md](https://github.com/toFrankie/react-learn/blob/main/docs/advanced-guides/doc-03.md) 错误边界
 * [doc-04.md](https://github.com/toFrankie/react-learn/blob/main/docs/advanced-guides/doc-04.md) Refs & DOM
 * [doc-05.md](https://github.com/toFrankie/react-learn/blob/main/docs/advanced-guides/doc-05.md) Refs 转发
+* [doc-06.md](https://github.com/toFrankie/react-learn/blob/main/docs/advanced-guides/doc-06.md) Fragments
 
 未完待续...
 
