@@ -44,6 +44,8 @@
 ##### Hooks
 
 * [doc-01.md](https://github.com/toFrankie/react-learn/blob/main/docs/hooks/doc-01.md) Hook 简介
+* [doc-02.md](https://github.com/toFrankie/react-learn/blob/main/docs/hooks/doc-02.md) State Hook
+* [doc-03.md](https://github.com/toFrankie/react-learn/blob/main/docs/hooks/doc-03.md) Effect Hook
 
 未完待续...
 
