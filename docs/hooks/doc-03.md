@@ -211,3 +211,147 @@ function Resize(props) {
 #### React 何时清除 effect？
 
 React 会在组件卸载的时候执行清除操作。正如之前学到的，effect 在每次渲染的时候都会执行。这就是为什么 React 会在执行当前 effect 之前对上一个 effect 进行清除。我们稍后将讨论为什么这将助于避免 bug以及如何在遇到性能问题时跳过此行为。
+
+## 三、使用 Effect 的提示
+
+> 除此之外，请记得 React 会等待浏览器完成画面渲染之后才会延迟调用 useEffect，因此会使得额外操作很方便。
+
+
+#### 使用多个 Effect 的提示
+
+使用 Hook 其中一个目的就是要解决 class 中生命周期函数经常包含不相关的逻辑，但又把相关逻辑分离到了几个不同方法中的问题。下述代码是将前述示例中的计数器和好友在线状态指示器逻辑组合在一起的组件：
+
+```jsx
+import React, { useState, useEffect } from 'react'
+
+function Counter(props) {
+  const [count, setCount] = useState(0)
+
+  // 处理事件监听器副作用
+  useEffect(() => {
+    const handler = () => {
+      console.log('Window size is changed.')
+    }
+    const listener = throttle(handler, 500)
+    window.addEventListener('resize', listener, false)
+    return () => {
+      window.removeEventListener('resize', listener)
+    }
+  }, [])
+
+  // 处理 DOM 副作用
+  useEffect(() => {
+    document.title = `You clicked ${count} times`
+  })
+
+  function clickHandler() {
+    setCount(count + 1)
+  }
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={clickHandler}>Click</button>
+      <div>Please change the window size to trigger the listener!</div>
+    </div>
+  )
+}
+```
+
+Hook 允许我们按照代码的用途分离他们， 而不是像生命周期函数那样。**React 将按照 effect 声明的顺序依次调用组件中的每一个 effect**。
+
+#### 解释：为什么每次更新的时候都要运行 Effect
+
+如果你已经习惯了使用 class，那么你或许会疑惑为什么 effect 的清除阶段在每次重新渲染时都会执行，而不是只在卸载组件的时候执行一次。
+
+我们看下以下例子：
+
+```jsx
+function Counter(props) {
+  console.log('---> render start')
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    console.log('---> effect1: listen')
+    return () => {
+      console.log('---> effect1: cleanup')
+    }
+  })
+
+  useEffect(() => {
+    console.log('---> effect2: listen')
+    return () => {
+      console.log('---> effect2: cleanup')
+    }
+  })
+
+  useEffect(() => {
+    document.title = `You clicked ${count} times`
+  })
+
+  const handler = () => setCount(count + 1)
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={handler}>Click</button>
+    </div>
+  )
+}
+```
+
+我们看下打印结果，当 `Counter` 组件首次加载：
+
+```text
+---> render start
+---> effect1: listen
+---> effect2: listen
+```
+
+若点击按钮，以更新组件的时候：
+
+```text
+---> render start
+---> effect1: cleanup
+---> effect2: cleanup
+---> effect1: listen
+---> effect2: listen
+```
+
+若组件从 UI 上移除（即卸载）：
+
+```text
+---> effect1: cleanup
+---> effect2: cleanup
+```
+
+useEffect 默认就会在调用一个新的 effect 之前对前一个 effect 进行清理。
+
+
+#### 提示：通过跳过 Effect 进行性能优化
+
+在某些情况下，每次渲染后都执行清理或执行 effect 可能会导致性能问题。在 class 组件中，我们可以通过在 ComponentDidUpdate 中添加 prevProps 或 prevState 的比较逻辑解决：
+
+```jsx
+componentDidUpdate(prevProps, prevState) {
+  if (prevState.count !== this.state.count) {
+    document.title = `You clicked ${this.state.count} times`
+  }
+}
+```
+
+这是很常见的需求，所以它被内置到了 useEffect 的 Hook API 中。如果某些特定值在两次重复渲染之间没有发生变化，你可以通知 React 跳过对 effect 的调用，只要传递数组作为 useEffect 的第二个可选参数即可：
+
+```jsx
+useEffect(() => {
+  document.title = `You clicked ${count} times`
+}, [num])
+```
+
+上面这个示例中，我们传入 `[count]` 作为第二个参数。这个参数是什么作用呢？如果 `count` 的值是 `5`，而且我们的组件重渲染的时候 `count` 还是等于 `5`，React 将对前一次渲染的 `[5]` 和后一次的 `[5]` 进行比较。因为数组中的所有元素都是相等的，React 会跳过这个 effect，这就实现了性能的优化。
+
+当渲染时，如果 `count` 的值更新成了 `6`，React 将会把前一次渲染时的数组 `[5]` 和这次渲染的数组 `[6]` 中的元素进行对比。这次因为 `5 !== 6`，React 就会再次调用 effect。**如果数组中有多个元素，即使只有一个元素发生变化，React 也会执行 effect**。
+
+注意：
+
+如果你要使用此优化方式，请确保数组中包含了所有外部作用域中会随时间变化并且在 effect 中使用的变量，否则你的代码会引用到先前渲染中的旧变量。参阅文档，了解更多关于[如何处理函数](https://react.docschina.org/docs/hooks-faq.html#is-it-safe-to-omit-functions-from-the-list-of-dependencies)以及[数组频繁变化时的措施](https://react.docschina.org/docs/hooks-faq.html#what-can-i-do-if-my-effect-dependencies-change-too-often)内容。
