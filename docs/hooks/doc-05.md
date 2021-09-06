@@ -232,3 +232,239 @@ function ThemedButton() {
 对先前 [Context 高级指南](https://react.docschina.org/docs/context.html)中的示例使用 hook 进行了修改，你可以在链接中找到有关如何 Context 的更多信息。
 
 ## 额外的 Hook
+
+以下介绍的 Hook，有些是上一节中基础 Hook 的变体，有些则仅在特性情况下会用到。
+
+
+#### 1. useReducer
+
+```jsx
+const [state, dispatch] = useReducer(reducer, initialArg, init)
+```
+
+[useState](https://react.docschina.org/docs/hooks-reference.html#usestate) 的替代方案。它接收一个形如 `(state, action) => newState` 的 reducer，并返回当前的 state 以及其配套的 dispatch 方法。（如果你熟悉 Redux 的话，就已经知道它如何工作了。）
+
+在某些场景下，useReducer 会比 useState 更适用，例如 state 逻辑较复杂且包含多个子值，或者下一个 state 依赖于之前的 state 等。并且，使用 useReducer 还能给那些给那些会触发深更新的组件做性能优化，因为你可以[向子组件传递 dispatch 而不是回调函数](https://react.docschina.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down)。
+
+以下是用 Reducer 重写 useState 一节的计数器示例：
+
+```jsx
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'increment':
+      return state + 1
+    case 'decrement':
+      return state - 1
+    case 'reset':
+      return 0
+    default:
+      return state
+  }
+}
+
+function Counter(props) {
+  const [state, dispatch] = useReducer(reducer, 0)
+  return (
+    <>
+      Count: {state}
+      <button onClick={() => dispatch({ type: 'reset' })}>Reset</button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+    </>
+  )
+}
+```
+
+> 注意
+>
+> React 会确保 `dispatch` 函数的标识是稳定的，并且不会在组件重新渲染时改变。这就是为什么可以安全地从 `useEffect` 或 `useCallback` 的依赖列表中省略 `dispatch`。
+
+**指定初始化 state**
+
+有两种不同初始化 useReducer state 的方式，你可以根据使用场景选择其中的一种。将初始 state 作为第二个参数传入 useReducer 是最简单的方法：
+
+
+```jsx
+const [state, dispatch] = useReducer(
+  reducer,
+  {
+    count: initialCount
+  }
+)
+```
+
+> 注意，React 不使用 `state = initialState` 这一由 Redux 推广开来的参数约定。有时候初始值依赖于 `props`，因此需要在调用 Hook 时指定。如果你特别喜欢上述的参数约定，可以通过调用 `useReducer(reducer, undefined, reducer)` 来模拟 Redux 的行为，但我们不鼓励你这么做。
+
+
+**惰性初始化**
+
+你可以选择惰性地创建初始 state。为此，需要将 `init` 函数作为 `userReducer` 的第三个参数传入，这样初始化 state 将被设置为 `init(initialArg)`。
+
+这么做可以将用于计算 `state` 的逻辑提取到 reducer 外部，这也为将来重置 `state` 的 action 做处理提供了便利：
+
+```jsx
+function init(initialCount) {
+  return { count: initialCount }
+}
+
+function Counter({ initialCount }) {
+  const [state, dispatch] = useReducer(reducer, initialCount, init)
+  // ...
+}
+```
+
+**跳过 dispatch**
+
+如果 Reducer Hook 的返回值与当前 state 相同，React 将跳过子组件的渲染及副作用的执行。（React 使用 `Object.is()` 比较算法来比较 state。）
+
+需要注意的是，React 可能仍需要在跳过渲染前再次渲染该组件。不过由于 React 不会对组件树的“深层”节点进行不必要的渲染，所以大可不必担心。如果你在渲染期间执行了高开销的计算，则可以使用 `useMemo` 来进行优化。
+
+#### 2. useCallback
+
+```jsx
+const memoizedCallback = useCallback(
+  () => { doSomething(a, b) },
+  [a, b]
+)
+```
+
+返回一个 [memoized](https://en.wikipedia.org/wiki/Memoization) 回调函数。
+
+把内联回调函数及依赖项数组作为参数传入 `useCallback`，它将返回该回调函数的 memoized 版本，该回调函数仅在某个依赖项改变时才会更新。当你把回调函数传递给经过优化并使用引用相对性去避免非必要渲染（例如 `shouldComponentUpdate`）的子组件时，它将非常有用。
+
+`useCallback(fn, deps)` 相当于 `useMemo(() => fn, deps)`。
+
+> 注意
+>
+> 依赖项数组不会作为参数传给回调函数。虽然从概念上来说它表现为：所有回调函数中引用的值都应该出现在依赖项数组中。未来编译器会更加智能，届时自动创建数组将成为可能。
+>
+> 我们推荐启用 eslint-plugin-react-hooks 中的 exhaustive-deps 规则。此规则会在添加错误依赖时发出警告并给出修复建议。
+
+#### 3. useMemo
+
+```jsx
+const memoizedValue = useMemo(() => computedExpensiveValue(a, b), [a, b])
+```
+
+返回一个 memoized 值。
+
+把“创建”函数和依赖项数组作为参数传入 useMemo，它仅会在某个依赖项改变时才重新计算 memoized 值。这种优化有助于避免在每次渲染时都进行高开销的计算。
+
+记住，传入 useMemo 的函数会在渲染期间执行。请不要在这个函数内部执行与渲染无关的操作，诸如副作用这类的操作属于 useEffect 的适用范畴，而不是 useMemo。
+
+如果没有提供依赖项数组，useMemo 在每次渲染时都会计算新的值。
+
+你可以把 useMemo 作为性能优化的手段，但不要把它当成语义上的保证。将来，React 可能会选择“遗忘”以前的一些 memoized 值，并在下次渲染时重新计算它们，比如为离屏组件释放内存。先编写在没有 useMemo 的情况下也可以执行的代码 —— 之后再在你的代码中添加 useMemo，一达到优化性能的目的。
+
+> 注意
+>
+> 依赖项数组不会作为参数传给“创建”函数。虽然从概念上来说它表现为：所有“创建”函数中引用的值都应该出现在依赖项数组中。未来编译器会更加智能，届时自动创建数组将成为可能。
+>
+> 我们推荐启用 eslint-plugin-react-hooks 中的 exhaustive-deps 规则。此规则会在添加错误依赖时发出警告并给出修复建议。
+
+#### 4. useRef
+
+```jsx
+const refContainer = useRef(initialValue)
+```
+
+`useRef` 返回一个可变的 ref 对象，该对象 `current` 属性被初始化为传入的参数（`initialValue`）。返回的 ref 对象在组件的整个生命周期内保持不变。
+
+一个常见的用例便是命令式地访问子组件：
+
+```jsx
+function TextInputWithFocusButton() {
+  const inputEl = useRef(null)
+  const onButtonClick = () => {
+    inputEl.current.focus()
+  }
+  return (
+    <>
+      <input ref={inputEl} type="text" />
+      <button onClick={onButtonClick}>Focus the input</button>
+    </>
+  )
+}
+```
+
+本质上，`useRef` 就像是可以在其 `current` 属性中保存一个可变值的“盒子”。
+
+你应该熟悉 ref 这一种[访问 DOM](https://react.docschina.org/docs/refs-and-the-dom.html) 的主要方式。如果你将对象以 `<div ref={myRef} />` 形式传入组件，则无论该节点如何变化，React 都会将 ref 对象的 `current` 属性设置为相应的 DOM 节点。
+
+然而，`useRef()` 比 `ref` 属性更有用。它可以[很方便地保存任何可变值](https://react.docschina.org/docs/hooks-faq.html#is-there-something-like-instance-variables)，其类似于在 class 中使用实例字段的方式。
+
+这是因为它创建的是一个普通 JavaScript 对象。而 `useRef()` 和自建一个 `{ current: ... }` 对象的唯一区别是，`useRef` 会在每次渲染时返回同一个 ref 对象。
+
+请记住，当 ref 对象内容发生变化时，`useRef` 并不会通知你。变更 `current` 属性不会引发组件重新渲染。如果想要在 React 绑定或解绑 DOM 节点的 ref 时运行某些代码，则需要使用[回调 ref](https://react.docschina.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node) 来实现。
+
+#### 5. useImperativeHandle
+
+`useImperativeHandle` 可以让你在使用 `ref` 时自定义暴露给父组件的实例值。在大多数情况下，应当避免使用 ref 这样的命令式代码。`useImperativeHandle` 应当与 `forwardRef` 一起使用：
+
+```jsx
+function FancyInput(props, ref) {
+  const inputRef = useRef()
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current.focus()
+    }
+  }))
+  return <input ref={inputRef} />
+}
+
+FancyInput = forwardRef(FancyInput)
+```
+
+在本例中，渲染 `<FancyInput ref={inputRef} />` 的父组件可以调用 `inputRef.current.focus()`。
+
+#### 6. useLayoutEffect
+
+其函数签名与 `useEffect` 相同，但他会在所有的 DOM 变更之后同步调用 effect。可以使用它来读取 DOM 布局并同步触发渲染。在浏览器执行绘制之前，`useLayoutEffect` 内部的更新计划被同步属性。
+
+尽可能使用标准的 `useEffect` 已避免阻塞视觉更新。
+
+> 提示
+>
+> 如果你正在将代码从 class 组件迁移到使用 Hook 的函数组件，则需要注意 `useLayoutEffect` 与 `componentDidMount`、`componentDidUpdate` 的调用阶段是一样的。但是，我们推荐你一开始先用 `useEffect`，只有当它出问题的时候再尝试使用 `useLayoutEffect`。
+>
+> 如果你使用服务端渲染，请记住，无论 `useLayoutEffect` 还是 `useEffect` 都无法在 JavaScript 代码加载完成之前执行。这就是为什么在服务端渲染组件中引入 `useLayoutEffect` 代码时会触发 React 告警。解决这个问题，需要将代码逻辑移至 `useEffect` 中（如果首次渲染不需要这段逻辑的情况下），或是将该组件延迟到客户端渲染完成后再显示（如果知道 `useLayoutEffect` 执行之前 HTML 都显示错乱的情况下）。
+>
+> 若要从服务端渲染的 HTML 中排除依赖布局 effect 的组件，可以通过使用 `showChild && <Child />` 进行条件渲染，并使用 `useEffect(() => { setShowChild(true) }, [])` 延迟展示组件。这样，在客户端渲染完成之前，UI 就不会像之前那样显示错乱了。
+
+#### 7. useDebugValue
+
+```jsx
+useDebugValue(value)
+```
+
+`useDebugValue` 可用于在 React 开发者工具中显示自定义 hook 的标签。
+
+例如，“自定义 Hook” 章节中描述的名为 `useFreiendStatus` 的自定义 Hook：
+
+```jsx
+function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null)
+
+  // ...
+
+  // 在开发者工具中的这个 Hook 旁边显示标签
+  // e.g. "FriendStatus: Online"
+  useDebugValue(isOnline ? 'Online' : 'Offline')
+
+  return isOnline
+}
+```
+
+> 提示：我们不推荐你向每个自定义 Hook 添加 debug 值。当它作为共享库的一部分时才最有价值。
+
+**延迟格式化 debug 值**
+
+在某些亲看下，格式化值的显示肯能是一项开销很大的操作。触发需要检查 Hook，否则没有必要这么做。
+
+因此，`useDebugValue` 接受一个格式化函数作为可选的第二个参数。该函数只有在 Hook 被检查时才会被调用。它接受 debug 值作为参数，并且返回一个格式化的显示值。
+
+例如，一个返回 `Date` 值的自定义 Hook 可以通过格式化函数来避免不必要的 `toDateString` 函数调用：
+
+```
+useDebugValue(data, data => data.toDateString)
+```
